@@ -97,6 +97,19 @@ bool CarDB::insert(Car car) {
 	return true;
 }
 
+void CarDB::Currenttable_to_oldtable()
+{
+	m_oldTable = m_currentTable;
+	m_oldCap = m_currentCap;
+	m_oldSize = m_currentSize;
+	m_oldNumDeleted = m_currNumDeleted;
+	m_oldProbing = m_currProbing;
+
+	m_currentCap = findNextPrime((m_currentSize - m_currNumDeleted) * 4);
+	m_currentSize = 0;	m_currNumDeleted = 0;
+	m_currentTable = new Car[m_currentCap];
+}
+
 bool CarDB::simple_insert(Car car)
 {
 	// Hash the car model to get the index
@@ -165,20 +178,11 @@ bool CarDB::remove(Car car) {
 
 			// Check for rehashing criteria
 			if (deletedRatio() > 0.8) {
-				// Perform incremental rehashing
-				int numToTransfer = static_cast<int>(floor(0.25 * m_currentSize - m_currNumDeleted));
+				Currenttable_to_oldtable(); //Convert to oldtable
+			}
+			if (m_oldTable != NULL) {
 
-				while (numToTransfer > 0) {
-					for (int j = 0; j < m_currentCap && numToTransfer > 0; j++) {
-						if (m_currentTable[j].getUsed() && !m_currentTable[j].getModel().empty()) {
-							// Transfer live data and mark as deleted in the current table
-							simple_insert(m_oldTable[j]);
-							m_oldTable[j].setUsed(true);
-							m_oldNumDeleted++;
-							numToTransfer--;
-						}
-					}
-				}
+				increamental_Transfer();
 			}
 
 			return true;

@@ -110,7 +110,9 @@ private:
 	/******************************************
 	* Private function declarations go here! *
 	******************************************/
-	bool simple_insert(Car car); //insert without checking for reharshing
-	void increamental_Transfer();  //transfer 25% data at once.
+	void Currenttable_to_oldtable();	//When the rehasing condition is met, this fln initilazies currtable to oldtable
+	bool simple_insert(Car car);	//insert without checking for reharshing
+	void increamental_Transfer();	//transfer 25% data at once
+
 };
 #endif
