@@ -118,10 +118,10 @@ int main() {
 	Random RndID(MINID, MAXID);
 	Random RndCar(0, 4);// selects one from the carModels array
 	Random RndQuantity(0, 50);
-	CarDB cardb(MINPRIME, hashCode, DOUBLEHASH);
+	CarDB cardb(45, hashCode, DOUBLEHASH);
 	bool result = true;
 
-	for (int i = 0; i < 55; i++) {
+	for (int i = 0; i < 60; i++) {
 		// generating random data
 		Car dataObj = Car(carModels[RndCar.getRandNum()], RndQuantity.getRandNum(), RndID.getRandNum(), true);
 		// saving data for later use

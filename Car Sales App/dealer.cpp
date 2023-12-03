@@ -26,6 +26,7 @@ CarDB::~CarDB() {
 void CarDB::changeProbPolicy(prob_t policy) {
 	m_newPolicy = policy;
 }
+
 bool CarDB::insert(Car car) {
 	// Hash the car model to get the index
 	int index = m_hash(car.getModel()) % m_currentCap;
@@ -45,6 +46,75 @@ bool CarDB::insert(Car car) {
 		else if (m_currProbing == DOUBLEHASH) {
 			index = (index + i * (11 - (m_hash(car.getModel()) % 11))) % m_currentCap;
 		}
+		i++;
+	}
+
+	m_currentTable[index] = car;
+	m_currentSize++;
+
+	cout << "Load Factor: " << lambda() * 100 << endl;
+
+	//Check for rehashing criteria
+	if (lambda() > 0.5 && m_oldTable == NULL) {
+		m_oldTable = m_currentTable;
+		m_oldCap = m_currentCap;
+		m_oldSize = m_currentSize;
+		m_oldNumDeleted = m_currNumDeleted;
+		m_oldProbing = m_currProbing;
+
+		m_currentCap = findNextPrime((m_currentSize - m_currNumDeleted) * 4);
+		m_currentSize = 0;	m_currNumDeleted = 0;
+		m_currentTable = new Car[m_currentCap];
+	}
+	if (m_oldTable != NULL) {	//if true, mean increamental transfer is still in progress,
+		dump();
+		//int numToTransfer = static_cast<int>(floor(0.25 * m_oldSize));
+
+		//if (m_oldNumDeleted == m_oldSize)
+		//{
+		//	delete[] m_oldTable;
+		//	m_oldCap = 0;
+		//	m_oldSize = 0;
+		//	m_oldNumDeleted = 0;
+		//}
+		//else {
+		//	while (numToTransfer > 0 && m_oldSize > 0) {
+		//		for (int j = 0; j < m_oldCap && numToTransfer > 0; j++) {
+		//			if (m_oldTable[j].getUsed() && !m_oldTable[j].getModel().empty()) {
+		//				// Transfer live data and mark as deleted in the old table
+		//				simple_insert(m_oldTable[j]); //to avoid recursion
+		//				m_oldTable[j].setUsed(false);
+		//				m_oldNumDeleted++;
+		//				numToTransfer--;
+		//				if (m_oldNumDeleted == m_oldSize) break;
+		//			}
+		//		}
+		//		if (m_oldNumDeleted == m_oldSize) break;
+		//	}
+		//}
+	}
+
+	return true;
+}
+
+bool CarDB::simple_insert(Car car)
+{
+	// Hash the car model to get the index
+	int index = m_hash(car.getModel()) % m_currentCap;
+	int i = 0;
+
+	// Handle collisions using the current probing policy
+	while (m_currentTable[index].getUsed()) {
+		if (m_currentTable[index] == car)
+			return false; 			// Car already exists, cannot insert duplicates
+
+
+		// Use quadratic or double-hash probing based on the policy
+		if (m_currProbing == QUADRATIC)
+			index = (index + (i * i)) % m_currentCap;
+
+		else if (m_currProbing == DOUBLEHASH)
+			index = (index + i * (11 - (m_hash(car.getModel()) % 11))) % m_currentCap;
 
 		i++;
 	}
@@ -52,11 +122,32 @@ bool CarDB::insert(Car car) {
 	// Insert the car at the calculated index
 	m_currentTable[index] = car;
 	m_currentSize++;
+}
 
-	// Check for rehashing criteria and perform incremental rehashing if needed
-
-	cout << "Load Factor: " << lambda() * 100 << endl;
-	return true;
+void CarDB::increamental_Transfer()
+{
+	if (m_oldNumDeleted == m_oldSize)
+	{
+		delete[] m_oldTable;
+		m_oldCap = 0;
+		m_oldSize = 0;
+		m_oldNumDeleted = 0;
+		return;
+	}
+	int numToTransfer = static_cast<int>(floor(0.25 * m_oldSize));
+	while (numToTransfer > 0 && m_oldSize > 0) {
+		for (int j = 0; j < m_oldCap && numToTransfer > 0; j++) {
+			if (m_oldTable[j].getUsed() && !m_oldTable[j].getModel().empty()) {
+				// Transfer live data and mark as deleted in the old table
+				simple_insert(m_oldTable[j]); //to avoid recursion
+				m_oldTable[j].setUsed(false);
+				m_oldNumDeleted++;
+				numToTransfer--;
+				if (m_oldNumDeleted == m_oldSize) break;
+			}
+		}
+		if (m_oldNumDeleted == m_oldSize) break;
+	}
 }
 
 bool CarDB::remove(Car car) {
@@ -72,18 +163,34 @@ bool CarDB::remove(Car car) {
 			m_currentTable[index].setUsed(true);
 			m_currNumDeleted++;
 
-			// Check for rehashing criteria and perform incremental rehashing if needed
+			// Check for rehashing criteria
+			if (deletedRatio() > 0.8) {
+				// Perform incremental rehashing
+				int numToTransfer = static_cast<int>(floor(0.25 * m_currentSize - m_currNumDeleted));
+
+				while (numToTransfer > 0) {
+					for (int j = 0; j < m_currentCap && numToTransfer > 0; j++) {
+						if (m_currentTable[j].getUsed() && !m_currentTable[j].getModel().empty()) {
+							// Transfer live data and mark as deleted in the current table
+							simple_insert(m_oldTable[j]);
+							m_oldTable[j].setUsed(true);
+							m_oldNumDeleted++;
+							numToTransfer--;
+						}
+					}
+				}
+			}
 
 			return true;
 		}
 
 		// Use quadratic or double-hash probing based on the policy
-		if (m_currProbing == QUADRATIC) {
+		if (m_currProbing == QUADRATIC)
 			index = (index + (i * i)) % m_currentCap;
-		}
-		else if (m_currProbing == DOUBLEHASH) {
+
+		else if (m_currProbing == DOUBLEHASH)
 			index = (index + i * (11 - (m_hash(car.getModel()) % 11))) % m_currentCap;
-		}
+
 
 		i++;
 	}
@@ -91,6 +198,9 @@ bool CarDB::remove(Car car) {
 	// Car not found
 	return false;
 }
+
+
+//cout << "Load Factor: " << lambda() * 100 << endl;
 
 Car CarDB::getCar(string model, int dealer) const {
 	// Implement the search logic here
@@ -163,12 +273,14 @@ void CarDB::dump() const {
 	cout << "Dump for the current table: " << endl;
 	if (m_currentTable != nullptr)
 		for (int i = 0; i < m_currentCap; i++) {
-			cout << "[" << i << "] : " << m_currentTable[i] << endl;
+			if (m_currentTable[i].getUsed())
+				cout << "[" << i << "] : " << m_currentTable[i] << endl;
 		}
 	cout << "Dump for the old table: " << endl;
 	if (m_oldTable != nullptr)
 		for (int i = 0; i < m_oldCap; i++) {
-			cout << "[" << i << "] : " << m_oldTable[i] << endl;
+			if (m_oldTable[i].getUsed())
+				cout << "[" << i << "] : " << m_oldTable[i] << endl;
 		}
 }
 
@@ -230,7 +342,6 @@ bool CarDB::updateQuantity(Car car, int quantity) {
 	return false;
 }
 
-
 bool CarDB::isPrime(int number) {
 	bool result = true;
 	for (int i = 2; i <= number / 2; ++i) {
@@ -258,6 +369,7 @@ int CarDB::findNextPrime(int current) {
 	//if a user tries to go over MAXPRIME
 	return MAXPRIME;
 }
+
 
 ostream& operator<<(ostream& sout, const Car& car) {
 	if (!car.m_model.empty())

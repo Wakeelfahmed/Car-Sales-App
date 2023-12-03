@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include "math.h"
+#include<vector>
 using namespace std;
 class Grader;
 class Tester;
@@ -104,9 +105,12 @@ private:
 	bool isPrime(int number);
 	int findNextPrime(int current);
 
+	std::vector<int> listinserted;
+
 	/******************************************
 	* Private function declarations go here! *
 	******************************************/
-
+	bool simple_insert(Car car); //insert without checking for reharshing
+	void increamental_Transfer();  //transfer 25% data at once.
 };
 #endif
