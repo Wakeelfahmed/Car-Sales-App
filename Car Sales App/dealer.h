@@ -4,7 +4,6 @@
 #include <iostream>
 #include <string>
 #include "math.h"
-#include<vector>
 using namespace std;
 class Grader;
 class Tester;
@@ -59,7 +58,7 @@ private:
 	// the following variable is used for lazy delete scheme in hash table
 	// if it is set to false, it means the bucket in the hash table is free for insert
 	// if it is set to true, it means the bucket contains live data, and we cannot overwrite it
-	bool m_used;
+	bool m_used; //////
 };
 
 class CarDB {
@@ -105,14 +104,11 @@ private:
 	bool isPrime(int number);
 	int findNextPrime(int current);
 
-	std::vector<int> listinserted;
-
 	/******************************************
 	* Private function declarations go here! *
 	******************************************/
 	void Currenttable_to_oldtable();	//When the rehasing condition is met, this fln initilazies currtable to oldtable
-	bool simple_insert(Car car);	//insert without checking for reharshing
-	void increamental_Transfer();	//transfer 25% data at once
-
+	bool simple_insert(Car car);		//insert without checking for reharshing
+	void increamental_Transfer();		//transfer 25% data at once
 };
 #endif

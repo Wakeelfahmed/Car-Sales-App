@@ -18,6 +18,7 @@ CarDB::CarDB(int size, hash_fn hash, prob_t probing) {
 	m_oldNumDeleted = 0;
 	m_oldProbing = NONE;
 }
+
 CarDB::~CarDB() {
 	delete[] m_currentTable;
 	delete[] m_oldTable;
@@ -52,7 +53,7 @@ bool CarDB::insert(Car car) {
 	m_currentTable[index] = car;
 	m_currentSize++;
 
-	cout << "Load Factor: " << lambda() * 100 << endl;
+	//cout << "Load Factor: " << lambda() * 100 << endl;
 
 	//Check for rehashing criteria
 	if (lambda() > 0.5 && m_oldTable == NULL) {
@@ -67,7 +68,9 @@ bool CarDB::insert(Car car) {
 		m_currentTable = new Car[m_currentCap];
 	}
 	if (m_oldTable != NULL) {	//if true, mean increamental transfer is still in progress,
-		dump();
+
+		increamental_Transfer();
+		//dump();
 		//int numToTransfer = static_cast<int>(floor(0.25 * m_oldSize));
 
 		//if (m_oldNumDeleted == m_oldSize)
@@ -142,6 +145,7 @@ void CarDB::increamental_Transfer()
 	if (m_oldNumDeleted == m_oldSize)
 	{
 		delete[] m_oldTable;
+		m_oldTable = nullptr;
 		m_oldCap = 0;
 		m_oldSize = 0;
 		m_oldNumDeleted = 0;
@@ -168,22 +172,23 @@ bool CarDB::remove(Car car) {
 	// Hash the car model to get the index
 	int index = m_hash(car.getModel()) % m_currentCap;
 	int i = 0;
-
+	if (car == EMPTY)
+		return false;
 	// Handle collisions using the current probing policy
-	while (m_currentTable[index].getUsed()) {
-		if (m_currentTable[index] == car) {
+	//while (m_currentTable[index].getUsed() || !(m_currentTable[index] == car)) {
+	while (m_currentTable[index].getUsed() || m_currentTable[index] == EMPTY) {
+		if (m_currentTable[index] == car && m_currentTable[index].getUsed()) {
+		//if (m_currentTable[index] == car) {
 			// Car found, mark as deleted
-			m_currentTable[index].setUsed(true);
+			m_currentTable[index].setUsed(false);
 			m_currNumDeleted++;
 
 			// Check for rehashing criteria
-			if (deletedRatio() > 0.8) {
+			if (deletedRatio() > 0.8)
 				Currenttable_to_oldtable(); //Convert to oldtable
-			}
-			if (m_oldTable != NULL) {
 
-				increamental_Transfer();
-			}
+			if (m_oldTable != NULL)
+				increamental_Transfer(); //continue increamental transfer
 
 			return true;
 		}
@@ -195,14 +200,32 @@ bool CarDB::remove(Car car) {
 		else if (m_currProbing == DOUBLEHASH)
 			index = (index + i * (11 - (m_hash(car.getModel()) % 11))) % m_currentCap;
 
-
 		i++;
+	}
+	i = 0;
+	if (m_oldTable != NULL) {
+		while (m_oldTable[index].getUsed()) {
+			if (m_oldTable[index] == car) {
+				// Car found, mark as deleted
+				m_oldTable[index].setUsed(false);
+				m_oldNumDeleted++;
+
+				return true;
+			}
+
+			// Use quadratic or double-hash probing based on the policy
+			if (m_oldProbing == QUADRATIC)
+				index = (index + (i * i)) % m_oldCap;
+			else if (m_oldProbing == DOUBLEHASH)
+				index = (index + i * (11 - (m_hash(car.getModel()) % 11))) % m_oldCap;
+
+			i++;
+		}
 	}
 
 	// Car not found
 	return false;
 }
-
 
 //cout << "Load Factor: " << lambda() * 100 << endl;
 
@@ -266,7 +289,7 @@ float CarDB::lambda() const {
 
 float CarDB::deletedRatio() const {
 	// Calculate and return the ratio of deleted buckets to the total number of occupied buckets
-	float totalOccupied = m_currentSize + m_currNumDeleted;
+	float totalOccupied = m_currentSize;
 	if (totalOccupied == 0) {
 		return 0.0; // Avoid division by zero
 	}
@@ -373,7 +396,6 @@ int CarDB::findNextPrime(int current) {
 	//if a user tries to go over MAXPRIME
 	return MAXPRIME;
 }
-
 
 ostream& operator<<(ostream& sout, const Car& car) {
 	if (!car.m_model.empty())

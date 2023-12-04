@@ -362,3 +362,5 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /enc_temp_folder
+/Car Sales App/Car Sales App.vcxproj
+/Car Sales App/Car Sales App.vcxproj.filters
