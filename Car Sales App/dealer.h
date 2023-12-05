@@ -96,7 +96,6 @@ private:
 	Car* m_oldTable;      // hash table
 	int        m_oldCap;        // hash table size (capacity)
 	int        m_oldSize;       // current number of entries
-	// m_oldSize includes deleted entries
 	int        m_oldNumDeleted; // number of deleted entries
 	prob_t     m_oldProbing;    // collision handling policy
 
@@ -108,7 +107,8 @@ private:
 	* Private function declarations go here! *
 	******************************************/
 	void Currenttable_to_oldtable();	//When the rehasing condition is met, this fln initilazies currtable to oldtable
-	bool simple_insert(Car car);		//insert without checking for reharshing
+	bool simple_insert(Car car);		//insert without checking for reharshing (called in increamental_Transfer)
 	void increamental_Transfer();		//transfer 25% data at once
+	int getCurrentCap() const;
 };
 #endif

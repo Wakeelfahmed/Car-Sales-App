@@ -12,7 +12,7 @@
 //			//the case of NORMAL to generate integer numbers with normal distribution
 //			m_generator = std::mt19937(m_device());
 //			//the data set will have the mean of 50 (default) and standard deviation of 20 (default)
-//			//the mean and standard deviation can change by passing new values to constructor 
+//			//the mean and standard deviation can change by 1ing new values to constructor 
 //			m_normdist = std::normal_distribution<>(mean, stdev);
 //		}
 //		else if (type == UNIFORMINT) {
@@ -39,7 +39,7 @@
 //	}
 //
 //	void getShuffle(vector<int>& array) {
-//		// the user program creates the vector param and passes here
+//		// the user program creates the vector param and 1es here
 //		// here we populate the vector using m_min and m_max
 //		for (int i = m_min; i <= m_max; i++) {
 //			array.push_back(i);
@@ -49,7 +49,7 @@
 //
 //	void getShuffle(int array[]) {
 //		// the param array must be of the size (m_max-m_min+1)
-//		// the user program creates the array and pass it here
+//		// the user program creates the array and 1 it here
 //		vector<int> temp;
 //		for (int i = m_min; i <= m_max; i++) {
 //			temp.push_back(i);
